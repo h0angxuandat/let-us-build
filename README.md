@@ -20,7 +20,7 @@ architecture & plan. Code lands milestone by milestone (see `document/backlog.md
 - **Core**: Python 3.12 · FastAPI · **LangGraph** (durable, resumable orchestration + HITL)
 - **LLM**: **LiteLLM** — per-agent provider/model (Anthropic + OpenAI at MVP)
 - **Web**: **SolidJS / SolidStart** · WebSocket realtime
-- **DB**: Postgres (+pgvector) · **Memory**: `rohitg00/agentmemory` sidecar (REST/MCP)
+- **DB**: Postgres (+pgvector) · **Memory**: own Python `lub_memory` (tiered, pgvector) — no Node sidecar
 - **Self-improvement**: sia-inspired harness lever (north-star)
 
 ## Docs

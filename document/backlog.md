@@ -65,12 +65,14 @@
 - **LUB-052** Discussion subgraph (bounded multi-turn, chair summarizes decision+rationale). *(plan, deps: 040, 050)*
 - **LUB-053** SDLC flow wired: Requirements→Design/Tech-design→Impl→Testing→Done with deps + bug loop + max-retry. *(plan, deps: 051, 052)*
 
-## M6 — Memory
-- **LUB-060** `MemoryClient` over agentmemory sidecar REST (remember/smart-search/observe/session). *(plan, deps: 030)*
-- **LUB-061** Scoping + role-permission matrix (project/ticket/role; shared vs private tiers). *(plan, deps: 060)*
-- **LUB-062** Retrieval-augmented agent context: every `run()` starts with smart-search. *(plan, deps: 061, 031)*
-- **LUB-063** Consolidation on ticket close (working → episodic summary). *(plan, deps: 061)*
-- **LUB-064** pgvector fallback when sidecar unavailable. *(plan, deps: 060)*
+## M6 — Memory (own `lub_memory`, Python-native)
+- **LUB-060** `MemoryRecord` model + migration (tiers, scoping, embedding, tsvector, metadata) on Postgres+pgvector. *(plan, deps: 010)*
+- **LUB-061** `MemoryClient` API: `remember()` / `recall()` (vector similarity + metadata filters) over repositories. *(plan, deps: 060, 030)*
+- **LUB-062** Scoping + role-permission matrix (project/ticket/role; shared vs role-private tiers), enforced in client. *(plan, deps: 061)*
+- **LUB-063** Retrieval-augmented agent context: every `run()` opens with `recall()`. *(plan, deps: 062, 031)*
+- **LUB-064** Consolidation on ticket close (working → episodic summary) as background task. *(plan, deps: 062)*
+- **LUB-065** *(Phase 2)* Hybrid retrieval: `tsvector` keyword search + RRF fusion with vector. *(plan, deps: 061)*
+- **LUB-066** *(Phase 3, optional)* Salience decay/strengthening + lightweight graph links. *(plan, deps: 061)*
 
 ## M7 — Self-improvement (north-star)
 - **LUB-070** `Lesson` capture: post-ticket feedback step reads trajectory + score → lesson. *(plan, deps: 053, 062)*

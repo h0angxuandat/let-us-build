@@ -10,7 +10,7 @@
 let-us-build/
 ├── README.md                      # what it is, quickstart
 ├── pyproject.toml                 # uv/poetry workspace for Python packages
-├── docker-compose.yml             # postgres(+pgvector) + agentmemory sidecar + (dev) services
+├── docker-compose.yml             # postgres(+pgvector) + (dev) services  — no Node sidecar
 ├── .env.example                   # provider keys, ports, DB url (no secrets committed)
 ├── Makefile / justfile            # dev tasks: up, migrate, test, lint, web
 │
@@ -67,12 +67,13 @@ let-us-build/
 │   │       ├── config.py          # AgentLLMConfig
 │   │       └── budget.py          # cost/rate caps, fallback
 │   │
-│   ├── memory/                    # agentmemory client + scoping
+│   ├── memory/                    # OWN memory subsystem (Python, on Postgres+pgvector)
 │   │   └── src/lub_memory/
-│   │       ├── client.py          # MemoryClient (REST to rohitg00 sidecar)
+│   │       ├── client.py          # MemoryClient: remember/recall/consolidate/forget
+│   │       ├── records.py         # MemoryRecord model (tiers, scoping, embedding, tsvector)
 │   │       ├── scope.py           # project/ticket/role scoping + permission matrix
-│   │       ├── consolidate.py     # ticket-close → episodic summary
-│   │       └── fallback.py        # pgvector-backed fallback
+│   │       ├── retrieval.py       # pgvector similarity (MVP); +tsvector/RRF (phase 2)
+│   │       └── consolidate.py     # ticket-close → episodic; milestone → semantic/procedural
 │   │
 │   ├── improvement/               # sia-inspired self-improvement (harness lever)
 │   │   └── src/lub_improvement/
@@ -105,7 +106,7 @@ web ─▶ (HTTP/WS) ─▶ core-api
 ```
 - `store` is the only package that talks to Postgres; everything else goes through repositories.
 - `llm` is the only package that talks to LLM providers (via LiteLLM).
-- `memory` is the only package that talks to the agentmemory sidecar.
+- `memory` owns the memory subsystem; it persists through `store`/pgvector like everything else.
 - Agents depend on capabilities (llm/memory/...) via injected interfaces — testable, swappable.
 
 ## 3. Conventions

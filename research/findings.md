@@ -13,9 +13,11 @@ Grounded research backing the architecture decisions. Sources cited inline.
 - `elizaOS/agentmemory` (PyPI `agentmemory`) = **different** Python lib, ChromaDB/Postgres, with the
   `create_memory/search_memory/get_memories/...` CRUD API. MIT. We are NOT using this for the store.
 
-**Decision**: wrap the rohitg00 server with a Python `MemoryClient`. Native scoping = projectId +
-agentId + shared/isolated. **We add**: first-class `ticketId` scope, a role-permission matrix, and
-ticket-close consolidation. Postgres+pgvector fallback if sidecar down.
+**Decision (revised 2026-07-01)**: **build our own** `lub_memory` in Python on Postgres+pgvector
+rather than run the Node sidecar — memory is core IP and a Python+CLI product should stay
+single-runtime. We borrow agentmemory's 4-tier model conceptually and add first-class `ticketId`
+scope + role-permission matrix + consolidation as native. Phased retrieval (vector → +RRF →
++graph) behind a stable `MemoryClient`. See `decisions.md` D4-rev / `system-design.md` §5.
 Sources: github.com/rohitg00/agentmemory · pypi.org/project/agentmemory (elizaOS).
 
 ## B. sia (self-improvement)

@@ -15,17 +15,18 @@
                                           │
         ┌─────────────────────────────────┼──────────────────────────────────┐
         ▼                                  ▼                                  ▼
-┌───────────────┐   WebSocket / REST  ┌─────────────────────┐   sidecar  ┌──────────────────┐
-│  Web (Solid)  │◀───────────────────▶│   Core (FastAPI)    │───────────▶│  agentmemory      │
-│  - dashboard  │   realtime events   │  - REST API         │  REST/MCP  │  service (Node,    │
-│  - intake     │                     │  - WS gateway       │  :3111     │  rohitg00) :3111   │
-│  - Kanban x4  │                     │  - Orchestrator     │            └──────────────────┘
-│  - ticket view│                     │    (LangGraph)      │
-│  - agent cfg  │                     │  - Agent runtime    │───────────▶┌──────────────────┐
-└───────────────┘                     │  - LLM router       │  LiteLLM   │ LLM providers     │
-                                       │    (LiteLLM)        │            │ Anthropic/OpenAI/ │
-                                       │  - Memory client    │            │ local/...         │
-                                       │  - Improvement loop │            └──────────────────┘
+┌───────────────┐   WebSocket / REST  ┌─────────────────────┐
+│  Web (Solid)  │◀───────────────────▶│   Core (FastAPI)    │           ┌──────────────────┐
+│  - dashboard  │   realtime events   │  - REST API         │  LiteLLM  │ LLM providers     │
+│  - intake     │                     │  - WS gateway       │──────────▶│ Anthropic/OpenAI/ │
+│  - Kanban x4  │                     │  - Orchestrator     │           │ local/...         │
+│  - ticket view│                     │    (LangGraph)      │           └──────────────────┘
+│  - agent cfg  │                     │  - Agent runtime    │
+└───────────────┘                     │  - LLM router       │
+                                       │    (LiteLLM)        │
+                                       │  - Memory (lub_     │   ALL OF CORE IS PYTHON —
+                                       │    memory, native)  │   NO Node sidecar.
+                                       │  - Improvement loop │
                                        │  - Workspace mgr    │
                                        └─────────────────────┘
                                           │            │
@@ -34,8 +35,9 @@
                                   │ Postgres   │  │ Project workspace   │
                                   │ + pgvector │  │ ./workspaces/<proj> │
                                   │ app state  │  │ generated code, run │
-                                  │ + LG ckpt  │  │ in sandbox          │
-                                  └────────────┘  └────────────────────┘
+                                  │ + memory   │  │ in sandbox          │
+                                  │ + LG ckpt  │  └────────────────────┘
+                                  └────────────┘
 ```
 
 ### Component responsibilities
@@ -47,10 +49,11 @@
 - **Core (FastAPI, Python)**: the brain. REST API + WebSocket gateway + the LangGraph
   orchestrator + agent runtime + LiteLLM router + memory client + improvement loop + workspace
   manager.
-- **agentmemory sidecar** (rohitg00, Node, port 3111): memory store consumed over REST/MCP.
-  Already available in this environment. We do NOT reimplement it.
+- **Memory** (`lub_memory`, native Python): our own memory subsystem on Postgres + pgvector. No
+  Node sidecar. Conceptually borrows agentmemory's 4-tier model; see §5.
 - **Postgres (+ pgvector)**: application state (projects, tickets, agents, discussions,
-  artifacts) AND LangGraph checkpoints for durable/resumable orchestration.
+  artifacts), the **memory store** (records + embeddings), AND LangGraph checkpoints for
+  durable/resumable orchestration — one store, one runtime.
 - **Project workspace + sandbox**: where generated code lives and is built/tested.
 
 ## 2. Technology decisions (with rationale)
@@ -63,7 +66,7 @@
 | Web framework | **SolidJS / SolidStart** | User-chosen. Fine-grained reactivity suits a realtime Kanban; SolidStart gives routing + server endpoints if needed. |
 | Realtime | **WebSocket** | Push orchestrator/ticket/discussion events to the board. LangGraph `astream_events` → WS. |
 | App DB | **Postgres + pgvector** | Relational app state + LangGraph `AsyncPostgresSaver` checkpoints in one store; pgvector available if we ever co-locate embeddings. |
-| Memory | **agentmemory sidecar (rohitg00) over REST/MCP** | Tiered consolidation + hybrid retrieval + scoping for free; we add ticket scope + role policy. Apache-2.0. |
+| Memory | **Own Python package `lub_memory` on Postgres + pgvector** | Memory is core IP for an AI-first product; keep the platform single-runtime (no Node sidecar in a Python+CLI app); native ticket/role scoping. Borrows agentmemory's tier model conceptually, phased retrieval (see §5). |
 | Self-improvement | **sia-inspired harness-lever loop** (custom, Python) | Adopt the prompt/skill/lesson + scored-feedback backbone; defer LoRA weight updates. MIT reference. |
 | Code sandbox | **Docker-per-project (default), local subprocess fallback** | Isolate generated code execution/tests. (OQ4 — confirm.) |
 
@@ -132,25 +135,49 @@ The **Run** is evaluated after every lane change: if **every ticket ∈ {done, h
 run is `paused` (if any `human_needed`) or `done` (all `done`). Answering a `human_needed` ticket
 re-activates the scheduler.
 
-## 5. Memory design (agentmemory sidecar + our scoping)
+## 5. Memory design (own `lub_memory` package — build, don't swallow)
 
-- **Consume rohitg00/agentmemory over REST** (`POST /agentmemory/remember`, `/smart-search`,
-  `/observe`, `session/start`, `graph/query`). A thin Python `MemoryClient` wraps it.
-- **Tiers (native)**: working (raw ticket activity) → episodic (ticket summary on close) →
-  semantic (project facts/specs) → procedural (workflows/decisions). Decay + strengthening native.
-- **Scoping we add on top**:
-  - native: `projectId`, `agentId` (= role), shared/isolated visibility.
-  - **add `ticketId`** as a first-class metadata/facet dimension (`ticket:LUB-123`) so retrieval
-    can filter per ticket.
-  - **role-permission matrix**: e.g. PM/TL read all; Dev writes its own tier; semantic/procedural
-    are team-visible, working memory is mostly role-private. Enforced in `MemoryClient`.
-- **Consolidation trigger**: on ticket close, collapse its working memory into one episodic
-  summary (artifact + decision + outcome). On project milestones, promote recurring facts to
-  semantic.
-- **Retrieval**: every agent run starts by `smart_search` over (project_id [+ ticket_id] [+ role])
-  to assemble context; hybrid RRF (keyword + vector + graph) is provided by the sidecar.
-- **Fallback**: if the sidecar is unavailable, degrade to a minimal Postgres-backed
-  `MemoryClient` (vector via pgvector) so the platform still runs. (Interface-first.)
+**Decision**: we build our own memory subsystem in Python rather than running the
+`rohitg00/agentmemory` Node sidecar. Rationale: memory is core IP for an AI-first product; a
+Python+CLI product should stay single-runtime (no extra Node service to boot/health-check/package);
+and the scoping/permission/consolidation logic we need is custom work either way. We *borrow
+agentmemory's tier model conceptually* — standing on the shoulders of their design without coupling
+to their server. (See ADR in `decisions.md` D4-rev.)
+
+### Data model (in Postgres + pgvector)
+```
+MemoryRecord  id, project_id, ticket_id|null, role|null, tier(working|episodic|semantic|procedural),
+              type(observation|decision|fact|lesson|artifact_ref), content(text),
+              embedding(vector), keywords(tsvector), metadata(jsonb), visibility(shared|role_private),
+              salience(float), source_refs[], created_at, last_accessed_at, access_count, expires_at|null
+```
+- `tier`: **working** (raw ticket activity) → **episodic** (ticket summary on close) → **semantic**
+  (project facts/specs) → **procedural** (workflows/decisions). Our own consolidation logic.
+- **Scoping is first-class** (not bolted on): `project_id`, `ticket_id`, `role`. A
+  **role-permission matrix** governs read/write (e.g. PM/TL read all; Dev writes its own tier;
+  semantic/procedural are team-visible; working memory is mostly role-private). Enforced in the
+  `MemoryClient` API, not left to caller discipline.
+
+### Retrieval — phased (interface stable across phases)
+- **MVP (M6)**: pgvector cosine similarity + metadata filters (`project_id [+ ticket_id] [+ role +
+  tier]`). Covers ~80% of the value. Every agent `run()` opens with a `recall()` to assemble context.
+- **Phase 2**: add keyword search via Postgres `tsvector`/BM25-style ranking, fused with vector
+  results using **Reciprocal Rank Fusion (RRF, k=60)** — matching agentmemory's hybrid quality.
+- **Phase 3 (if needed)**: lightweight knowledge-graph traversal (entity/relation links) + decay
+  (Ebbinghaus-style salience decay + strengthening on access) for long-lived projects.
+
+### Consolidation
+- On **ticket close**: collapse the ticket's `working` records into one `episodic` summary
+  (artifact + decision + outcome).
+- On **milestone**: promote recurring facts to `semantic`; promote reusable decisions/workflows to
+  `procedural`. Consolidation runs as a background task (own logic, LLM-summarized).
+
+### Interface
+A single `MemoryClient` (in `packages/memory`) exposes `remember()`, `recall()`, `consolidate()`,
+`forget()` over the repository layer. Because it's our code on our DB, there is **no sidecar
+availability risk** and no separate fallback path — Postgres being up is already a hard dependency.
+The interface is intentionally agentmemory-shaped so we could swap in their server later if ever
+desired, but that is not the plan.
 
 ## 6. Self-improvement design (sia-inspired, harness lever)
 
