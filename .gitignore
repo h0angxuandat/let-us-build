@@ -1,0 +1,34 @@
+# Orchestrator-internal memory (not a project artifact)
+.memory/
+
+# Runtime-generated project workspaces
+workspaces/
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+
+# Node / web
+node_modules/
+.vite/
+.output/
+.solid/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
