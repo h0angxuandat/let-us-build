@@ -1,17 +1,37 @@
-/* Design tokens (see design/ui-ux-spec.md §2). Light, calm, accessible. Expanded in M2. */
+/* Design tokens (see design/ui-ux-spec.md §2). Light, calm, accessible. */
 :root {
   --color-surface: oklch(99% 0 0);
+  --color-surface-2: oklch(97% 0.004 250);
+  --color-border: oklch(90% 0.006 250);
   --color-text: oklch(22% 0 0);
-  --color-accent: oklch(58% 0.16 250);
+  --color-muted: oklch(50% 0.01 250);
+  --color-accent: oklch(55% 0.17 255);
+  --color-accent-text: oklch(99% 0 0);
+  --color-attention: oklch(58% 0.19 40);
+  --color-error: oklch(52% 0.2 25);
+
+  /* Role identity colors (paired ALWAYS with icon + label — never color alone). */
+  --role-pm: oklch(55% 0.17 285);
+  --role-ba: oklch(55% 0.15 200);
+  --role-designer: oklch(58% 0.17 340);
+  --role-tech-lead: oklch(52% 0.16 255);
+  --role-developer: oklch(50% 0.14 160);
+  --role-qe: oklch(52% 0.15 130);
 
   --space-1: 0.5rem;
   --space-2: 1rem;
+  --space-3: 1.5rem;
   --space-4: 2rem;
 
-  --text-base: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
-  --text-title: clamp(1.75rem, 1.2rem + 2vw, 3rem);
+  --radius: 10px;
+  --radius-sm: 7px;
 
-  --duration-normal: 240ms;
+  --text-sm: 0.85rem;
+  --text-base: clamp(1rem, 0.95rem + 0.3vw, 1.0625rem);
+  --text-title: clamp(1.6rem, 1.2rem + 1.6vw, 2.4rem);
+
+  --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.06), 0 2px 8px oklch(0% 0 0 / 0.05);
+  --duration-normal: 200ms;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
