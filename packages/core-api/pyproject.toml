@@ -7,8 +7,9 @@ dependencies = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
   "pydantic-settings>=2.4",
+  "lub-store",
 ]
-# lub-store / lub-orchestrator / ... are wired in from M1 onward.
+# lub-orchestrator / ... are wired in from M4 onward.
 
 [build-system]
 requires = ["hatchling"]
