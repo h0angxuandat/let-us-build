@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://lub:lub@127.0.0.1:5432/letusbuild"
     default_provider: str = "anthropic"
     default_model: str = "claude-opus-4-8"
+    seed_on_startup: bool = True
 
 
 def get_settings() -> Settings:

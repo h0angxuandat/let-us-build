@@ -3,7 +3,11 @@ name = "lub-store"
 version = "0.0.0"
 description = "let-us-build — persistence & domain kernel (models, repositories, shared enums)."
 requires-python = ">=3.12"
-dependencies = []  # SQLAlchemy/alembic added in M1 (LUB-010/011)
+dependencies = [
+  "sqlalchemy[asyncio]>=2.0",
+  "alembic>=1.13",
+  "asyncpg>=0.29",
+]
 
 [build-system]
 requires = ["hatchling"]
