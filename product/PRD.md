@@ -86,10 +86,18 @@ decision is genuinely required. The user acts as product sponsor, not project ma
 - FR-AGT-5: Agents emit structured **artifacts** (BRD, PRD, wireframe spec, tech design, code,
   test plan, test results).
 
-### 6.4 Orchestration / SDLC
-- FR-ORC-1: PM agent owns ticket lifecycle and lane transitions.
-- FR-ORC-2: SDLC ordering (see system-design): Requirements → Design → Tech design → Implement →
-  Test → Done, with dependencies enforced.
+### 6.4 Orchestration / SDLC (Agile + DDD)
+- FR-ORC-0: The team works **Agile/iteratively**: Epics → User Stories → Tasks, planned into
+  **Sprints**, delivered as increments, re-planned each sprint; ceremonies are agent activities
+  and the retrospective feeds the self-improvement loop. Sprint length = configurable work-batch.
+- FR-ORC-0b: The team applies **DDD**: BA owns the ubiquitous language; TL defines bounded
+  contexts + context map + tactical domain model (aggregates/entities/VOs/domain events); each
+  implementation ticket is tied to a `bounded_context` + `aggregate` so generated code tracks the
+  business domain. (Applies to the product built AND to this platform's own architecture.)
+- FR-ORC-1: PM agent owns ticket lifecycle, sprints, and lane transitions.
+- FR-ORC-2: Dependency-driven flow (see system-design): inception (requirements + DDD strategic)
+  then per-sprint Design/Tech-design → Implement → Test → Review → Done, with `depends_on`
+  enforced (independent stories run in parallel).
 - FR-ORC-3: Auto-pick: idle agents claim eligible `plan` tickets matching their role.
 - FR-ORC-4: Any agent can move a ticket to `human needed` with a specific question; the run does
   not block other independent tickets.

@@ -81,15 +81,19 @@ Project        id, name, description, target_platform, constraints, status, crea
 Requirement    id, project_id, kind(brief|design|file|link), content/text, file_ref, created_at
 Agent          id, project_id|null(global default), role(enum), display_name, enabled,
                provider, model, temperature, system_prompt, skill_ids[], config_json
-Ticket         id, project_id, key(LUB-123), title, description, type(enum), lane(enum),
-               status, priority, assignee_role|null, depends_on[], parent_id|null,
-               created_by(user|agent), sdlc_stage, created_at, updated_at
+Sprint         id, project_id, index, goal, status(planned|active|review|done),
+               batch_limit, started_at, closed_at            (Agile iteration)
+Ticket         id, project_id, sprint_id|null, key(LUB-123), title, description, type(enum),
+               lane(enum), status, priority, story_points|null, acceptance_criteria|null,
+               bounded_context|null, aggregate|null, assignee_role|null, depends_on[],
+               parent_id|null, created_by(user|agent), sdlc_stage, created_at, updated_at
 TicketEvent    id, ticket_id, kind(lane_change|assign|comment|artifact|human_request|answer),
                actor(agent_id|user), payload_json, created_at
 Discussion     id, ticket_id, topic, participants(role[]), status(open|resolved),
                decision, rationale, transcript_ref, created_at
 Message        id, discussion_id, agent_role, content, created_at
-Artifact       id, ticket_id, type(BRD|PRD|wireframe|tech_design|code|test_plan|test_result|adr),
+Artifact       id, ticket_id, type(BRD|PRD|epic|user_story|ubiquitous_language|context_map|
+               domain_model|wireframe|tech_design|code|test_plan|test_result|adr|retro),
                path|inline, version, produced_by(role), created_at
 HumanRequest   id, ticket_id, question, options_json|null, status(open|answered),
                answer, answered_at
@@ -100,7 +104,36 @@ Run            id, project_id, status(running|paused|done), stop_reason, started
 
 `lane ∈ {plan, human_needed, processing, testing, done}`.
 `role ∈ {ba, designer, tech_lead, developer, qe, pm}`.
-`ticket.type ∈ {requirement, design, tech_design, implementation, test, bug, chore, decision}`.
+`ticket.type ∈ {epic, user_story, task, design, tech_design, bug, chore, decision, spike}`.
+Epic→Story→Task hierarchy uses `parent_id`. `bounded_context`/`aggregate` tie a ticket to the
+DDD model so implementation stays aligned with the domain (see §3.2).
+
+### 3.1 Methodology in the model: Agile + DDD
+- **Agile**: `Sprint` groups tickets into iterations; the 4-lane board is the sprint board;
+  ceremonies are agent activities (see `agent-sdlc-flow.md` §10); the retrospective emits
+  `Lesson`s (§6). Sprint length = a configurable work-batch, not wall-clock.
+- **DDD applies to two domains**:
+  1. **The product being built** — agents produce `ubiquitous_language`, `context_map`, and
+     `domain_model` artifacts; each implementation ticket carries `bounded_context` + `aggregate`
+     so generated code mirrors the business domain. The glossary lives in memory's semantic tier
+     so all agents share one language.
+  2. **This platform** — see §3.2.
+
+### 3.2 This platform's own bounded contexts (DDD strategic)
+Our packages are organized as bounded contexts with clear aggregates (roots in **bold**):
+| Bounded context | Aggregate roots | Package |
+|---|---|---|
+| Project & Delivery | **Project**, **Sprint**, **Ticket** (Epic/Story/Task) | `store` + `core-api` |
+| Agent Runtime | **Agent**, **Discussion** | `agents` |
+| Orchestration | **Run** (+ LangGraph thread per Ticket) | `orchestrator` |
+| Memory | **MemoryRecord** | `memory` |
+| Knowledge/Improvement | **Lesson** | `improvement` |
+| Workspace | **Workspace** (generated code) | `workspace` |
+
+Context relationships: Orchestration drives Project & Delivery; Agent Runtime consumes Memory
+(shared kernel = ubiquitous language); Improvement subscribes to Delivery domain events
+(ticket/sprint closed) to mint Lessons. Cross-context communication is via domain events, not
+reaching into each other's tables (boundary discipline, SR-7).
 
 ## 4. Orchestration design (LangGraph)
 

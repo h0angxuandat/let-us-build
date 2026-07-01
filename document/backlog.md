@@ -13,7 +13,7 @@
 | **M2** | Web shell + Kanban | SolidJS app, 4-lane board, intake, ticket detail (read), WS feed. | M1 |
 | **M3** | LLM + agents (single) | LiteLLM router; one agent (BA) runs a ticket end-to-end. | M1 |
 | **M4** | Orchestrator + lanes | LangGraph per-ticket graph, scheduler/auto-pick, HITL interrupt. | M3 |
-| **M5** | Full roster + discussion | All six agents; discussion subgraph; SDLC dependency flow. | M4 |
+| **M5** | Full roster + Agile/DDD | All six agents; DDD strategic+tactical; sprint/ceremony engine; discussion; Agile SDLC flow. | M4 |
 | **M6** | Memory | agentmemory sidecar client + scoping + consolidation. | M3 |
 | **M7** | Self-improvement | Lessons + per-role verifiers + feedback loop (harness lever). | M5, M6 |
 | **M8** | Sandbox + code prod | Workspace manager + Docker sandbox; QE runs tests. | M5 |
@@ -31,7 +31,7 @@
 - **LUB-004** Core-api skeleton: FastAPI app factory, `/health`, settings loader. *(plan, deps: 001)*
 
 ## M1 — Domain + persistence
-- **LUB-010** SQLAlchemy models for the full domain model (Project, Requirement, Agent, Ticket, TicketEvent, Discussion, Message, Artifact, HumanRequest, Lesson, Run). *(plan, deps: 004)*
+- **LUB-010** SQLAlchemy models for the full domain model (Project, Requirement, Agent, **Sprint**, Ticket [Epic/Story/Task via parent_id, with bounded_context/aggregate], TicketEvent, Discussion, Message, Artifact, HumanRequest, Lesson, Run). Organized as DDD bounded contexts. *(plan, deps: 004)*
 - **LUB-011** Alembic migrations + seed of 6 default agent configs. *(plan, deps: 010)*
 - **LUB-012** Repository-pattern data access per aggregate. *(plan, deps: 010)*
 - **LUB-013** REST CRUD: projects, requirements, agents config. *(plan, deps: 012)*
@@ -59,11 +59,13 @@
 - **LUB-044** `start project` → PM seeds initial backlog tickets. *(plan, deps: 042)*
 - **LUB-045** Run stop-condition evaluation (all done / done+human_needed). *(plan, deps: 042)*
 
-## M5 — Full roster + discussion
-- **LUB-050** Designer, Tech Lead, Developer, QE, PM agents + their skill packs. *(plan, deps: 031)*
-- **LUB-051** TL explodes tech design into implementation tickets with dependency graph. *(plan, deps: 050, 042)*
-- **LUB-052** Discussion subgraph (bounded multi-turn, chair summarizes decision+rationale). *(plan, deps: 040, 050)*
-- **LUB-053** SDLC flow wired: Requirements→Design/Tech-design→Impl→Testing→Done with deps + bug loop + max-retry. *(plan, deps: 051, 052)*
+## M5 — Full roster + Agile/DDD flow + discussion
+- **LUB-050** Designer, Tech Lead, Developer, QE, PM agents + their skill packs (incl. DDD + Agile skills). *(plan, deps: 031)*
+- **LUB-051** DDD strategic: BA ubiquitous-language glossary + TL bounded contexts + context map artifacts (stored in memory semantic tier). *(plan, deps: 050, 062)*
+- **LUB-052** DDD tactical: TL domain model (aggregates/entities/VOs/domain events) → slice stories into per-aggregate tasks (bounded_context/aggregate tagged). *(plan, deps: 051)*
+- **LUB-053** Sprint + ceremony engine: Sprint entity, sprint planning, review/demo, retrospective→Lessons; board = sprint board. *(plan, deps: 042, 045)*
+- **LUB-054** Discussion subgraph (bounded multi-turn, chair summarizes decision+rationale). *(plan, deps: 040, 050)*
+- **LUB-055** Agile SDLC wired: inception → per-sprint Design/Tech-design→Impl→Test→Review→Done with deps + bug loop + max-retry. *(plan, deps: 052, 053, 054)*
 
 ## M6 — Memory (own `lub_memory`, Python-native)
 - **LUB-060** `MemoryRecord` model + migration (tiers, scoping, embedding, tsvector, metadata) on Postgres+pgvector. *(plan, deps: 010)*

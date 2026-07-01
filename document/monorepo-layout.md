@@ -112,6 +112,9 @@ web ─▶ (HTTP/WS) ─▶ core-api
 ## 3. Conventions
 - Python: `ruff` + `mypy` + `pytest`; repository pattern; immutable DTOs (pydantic) at boundaries;
   files ≤ 800 lines; functions ≤ 50 lines.
+- **DDD**: packages map to bounded contexts (see `system-design.md` §3.2); one repository per
+  aggregate root; cross-context comms via domain events, not table-reaching. `store/models.py`
+  includes the `Sprint` aggregate (Agile) and `bounded_context`/`aggregate` fields on tickets.
 - Web: SolidJS components by feature; CSS custom-property tokens; WebSocket events into a reactive
   store; no business logic in components.
 - Config: all secrets via env (`.env`, never committed); `init` scaffolds `.env` from

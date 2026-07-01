@@ -1,8 +1,23 @@
 # Agent Roster & SDLC Flow — let-us-build
 
-> Status: DRAFT for review · Date: 2026-06-30 · Companion to `system-design.md`.
-> Defines the six agents, their skills, the SDLC ordering, the ticket lifecycle across the
+> Status: DRAFT for review · Date: 2026-07-01 · Companion to `system-design.md`.
+> Defines the six agents, their skills, the **Agile** SDLC, the ticket lifecycle across the
 > 4 lanes, auto-pick rules, discussion protocol, and the done/pause condition.
+
+## 0. Methodology (LOCKED)
+- **Agile / iterative.** Work is organized as **Epics → User Stories → Tasks**, planned into
+  **Sprints (iterations)**, delivered as working increments, and re-planned each sprint. The 4-lane
+  board is the **sprint board**. Agent ceremonies replace human ones (§10). Retrospective output
+  feeds the self-improvement lessons loop (see `system-design.md` §6).
+- **Domain-Driven Design (DDD).** Agents model the **business domain** first and keep the design +
+  code tied to it. This applies to BOTH:
+  1. **the product being built** — BA owns the *ubiquitous language*; TL defines *bounded contexts*,
+     a *context map*, and the *tactical model* (aggregates, entities, value objects, domain events,
+     repositories, domain services); Dev implements per-aggregate.
+  2. **this platform itself** — our own packages are organized as bounded contexts (see
+     `system-design.md` §3.1).
+  DDD artifacts are first-class (glossary, context map, domain model) and are stored in memory's
+  semantic tier so every agent shares one vocabulary.
 
 ## 1. The four lanes (board contract)
 
@@ -24,43 +39,68 @@ Each agent has independent config: `provider`, `model`, `temperature`, `system_p
 
 | Role | Mandate | Primary inputs | Primary outputs (artifacts) | Default model tier |
 |---|---|---|---|---|
-| **Project Manager (PM)** | Owns the board; decomposes the brief into tickets; sets dependencies/priority; enforces stop condition; chairs decisions. | Project + requirements; all artifacts. | Backlog (tickets), milestone plan, status. | strong |
-| **Business Analyst (BA)** | Elicits & documents requirements; writes BRD + user stories; clarifies ambiguity (→ human_needed). | Requirement intake. | BRD, user stories, acceptance criteria. | mid |
-| **UI/UX Designer** | Wireframes, design system spec, UX flows; a11y direction. | BRD/PRD, design refs. | Wireframe spec, design tokens, UX flow. | mid |
-| **Technical Lead (TL)** | System analysis, tech design, ADRs, task breakdown into implementation tickets; chairs technical debates. | BRD/PRD, design specs. | Tech design doc, ADRs, impl task graph. | strong |
-| **Developer (Dev)** | Implements an implementation ticket in the workspace; writes unit tests. | Tech design, one impl ticket. | Code (workspace diff), unit tests. | strong |
-| **QE Engineer** | Test plan + test cases; runs tests in sandbox; reviews artifacts cross-cutting; accepts/rejects. | All artifacts, produced code. | Test plan, test results, review report. | mid |
+| **Project Manager (PM)** | Product-owner + scrum-master: owns backlog + sprints; refines/prioritizes; runs planning/review/retro; enforces DoD + stop condition; chairs decisions. | Project + requirements; all artifacts. | Product backlog, sprint plan, increment/retro notes, status. | strong |
+| **Business Analyst (BA)** | Elicits & documents requirements; writes **epics + user stories** + acceptance criteria; owns the **ubiquitous language** glossary; clarifies ambiguity (→ human_needed). | Requirement intake. | BRD, epics/user stories, acceptance criteria, **ubiquitous-language glossary**. | mid |
+| **UI/UX Designer** | Wireframes, design system spec, UX flows; a11y direction. | BRD/PRD, stories, design refs. | Wireframe spec, design tokens, UX flow. | mid |
+| **Technical Lead (TL)** | System analysis + **DDD**: defines **bounded contexts + context map** and the **tactical domain model** (aggregates, entities, value objects, domain events); tech design, ADRs; breaks stories into per-aggregate tasks; chairs technical debates. | BRD/PRD, stories, glossary, design specs. | **Context map, domain model (DDD)**, tech design doc, ADRs, impl task graph. | strong |
+| **Developer (Dev)** | Implements a task per the domain model (one aggregate/slice); writes unit tests; uses ubiquitous language in code. | Domain model, tech design, one task. | Code (workspace diff), unit tests. | strong |
+| **QE Engineer** | Test plan + cases from acceptance criteria; runs tests in sandbox; cross-artifact review; **sprint-review/demo** acceptance. | All artifacts, produced code, acceptance criteria. | Test plan, test results, review report. | mid |
 
 > Roster is pluggable post-MVP (custom roles/skills). MVP ships these six, all toggle-able.
 
-## 3. SDLC ordering (the work sequence agents follow)
+## 3. Agile SDLC (iterative, DDD-driven)
 
-Reference: classic SDLC (Requirements → Design → Architecture/Tech-design → Implementation →
-Testing → Done), adapted to tickets and made dependency-driven rather than strictly phased so
-independent tickets run in parallel.
+Instead of a single waterfall pass, the team works in **sprints** over a **product backlog**. Each
+sprint delivers a working, tested increment; the backlog is re-refined afterward. Within a sprint,
+work is still **dependency-driven** (not phase-locked) so independent stories run in parallel.
 
+### 3.1 Inception (sprint 0 — done once per project, refined continually)
 ```
- Requirements (BA)
-        │  produces user stories → spawns design + tech-design tickets
+ Requirement intake
+        │
         ▼
- ┌──────────────┐        ┌─────────────────────┐
- │ Design (UX)  │        │ Tech design (TL)    │   (can run in parallel)
- └──────┬───────┘        └─────────┬───────────┘
-        └──────────────┬───────────┘
-                       ▼
-            Implementation (Dev)   ← TL breaks tech design into impl tickets
-                       │
-                       ▼
-                 Testing (QE)  ──fail──▶ Bug ticket (Dev)  ──┐
-                       │ pass                                 │
-                       ▼                                      │
-                     Done ◀───────────────────────────────────┘ (re-test on fix)
+ BA: elicit → epics + user stories + acceptance criteria + UBIQUITOUS LANGUAGE glossary
+        │
+        ▼
+ TL: DDD strategic design → BOUNDED CONTEXTS + CONTEXT MAP  (which contexts, how they relate)
+        │
+        ▼
+ PM: shape product backlog (epics/stories) + first sprint plan
 ```
 
-- The **PM** seeds the initial `plan` tickets (often a single "Requirements" ticket for the BA,
-  which then spawns the rest). The **TL** explodes tech design into implementation tickets with a
-  dependency graph. Dependencies (`depends_on`) gate auto-pick so ordering is respected without a
-  rigid global phase lock.
+### 3.2 Per-sprint loop (repeats until backlog empty / user stops)
+```
+ Sprint planning (PM+TL)   select stories for the sprint, slice into tasks by aggregate
+        │
+        ▼
+ ┌──────────────┐   ┌───────────────────────────────┐
+ │ Design (UX)  │   │ TL: DDD tactical model         │   (parallel where independent)
+ │ per story    │   │ aggregates/VOs/domain events   │
+ └──────┬───────┘   └───────────────┬───────────────┘
+        └───────────────┬───────────┘
+                        ▼
+             Dev: implement task (one aggregate/slice) + unit tests
+                        │
+                        ▼
+                  QE: test in sandbox  ──fail──▶ bug story → backlog ──┐
+                        │ pass                                          │
+                        ▼                                               │
+              Sprint review/demo (QE+PM) vs acceptance criteria         │
+                        │ accepted                                      │
+                        ▼                                               │
+                  Story Done ◀──────────────────────────────────────────┘ (re-test on fix)
+                        │
+                        ▼
+              Retrospective (PM+all) → LESSONS → self-improvement loop + backlog re-refine
+```
+
+- **PM** seeds inception then, each sprint, selects backlog items and runs the ceremonies (§10).
+- **TL** does DDD strategic design once (contexts/map) and tactical design per story
+  (aggregates), then slices stories into per-aggregate implementation tasks.
+- Dependencies (`depends_on`) gate auto-pick so ordering is respected without a rigid phase lock;
+  an increment is only "done" when its stories pass QE against acceptance criteria.
+- The **retrospective** is not decorative: its output is written as **Lessons** (see
+  `system-design.md` §6) — Agile's retro and sia's feedback loop are the same mechanism here.
 
 ## 4. Ticket lifecycle (state machine)
 
@@ -93,12 +133,16 @@ independent tickets run in parallel.
 
 ## 6. Skills (per-role expert bundles)
 Skills are versioned prompt/checklist/tool packs attached to a role. Examples:
-- BA: `requirements-elicitation`, `user-story-writing`, `acceptance-criteria`.
+- BA: `requirements-elicitation`, `user-story-writing`, `acceptance-criteria`,
+  `ubiquitous-language` (DDD), `event-storming` (DDD discovery).
 - Designer: `wireframing`, `design-tokens`, `a11y-wcag`, `ux-flow`.
-- TL: `system-design`, `adr-authoring`, `task-decomposition`, `api-design`.
-- Dev: `tdd`, `code-implementation`, `refactoring`, stack-specific packs.
-- QE: `test-planning`, `test-case-design`, `cross-artifact-review`, `e2e`.
-- PM: `backlog-decomposition`, `dependency-mapping`, `decision-chairing`.
+- TL: `ddd-strategic` (bounded contexts + context map), `ddd-tactical` (aggregates/entities/VOs/
+  domain events/repositories), `system-design`, `adr-authoring`, `task-decomposition`, `api-design`.
+- Dev: `tdd`, `ddd-implementation` (aggregate/repository patterns), `code-implementation`,
+  `refactoring`, stack-specific packs.
+- QE: `test-planning`, `test-case-design`, `cross-artifact-review`, `e2e`, `sprint-review`.
+- PM: `agile-backlog` (epics/stories/refinement), `sprint-planning`, `dependency-mapping`,
+  `retrospective`, `decision-chairing`.
 
 Skills feed the agent's system prompt + available tools. Self-improvement (sia harness lever)
 updates these skill packs and accumulates **lessons** that are retrieved alongside them.
@@ -120,7 +164,28 @@ updates these skill packs and accumulates **lessons** that are retrieved alongsi
   as a `TicketEvent` and added to memory.
 
 ## 9. Definition of done / pause (LOCKED, restated)
-- A **Run** is **DONE** when **all tickets are `done`**.
+- **Story DoD**: code implemented + unit tests pass + QE tests pass in sandbox + accepted at
+  sprint review against acceptance criteria + ubiquitous language honored in code.
+- **Sprint DoD**: all committed stories meet Story DoD; increment demoed; retrospective produced
+  (→ Lessons).
+- A **Run** is **DONE** when **all tickets are `done`** (backlog empty, all sprints complete).
 - A **Run** is **PAUSED** when **all tickets are `done` or `human needed`** and at least one is
   `human needed`. Answering re-activates the scheduler; the cycle repeats until all are `done`.
 - No ticket may sit in `plan`/`processing`/`testing` for the run to be considered done/paused.
+
+## 10. Agile ceremonies (agent-run)
+Ceremonies are automated agent activities, not calendar meetings. Sprint length is a **work-batch**
+(configurable N stories / token budget), not wall-clock time.
+
+| Ceremony | Driven by | What happens | Output |
+|---|---|---|---|
+| Backlog refinement | BA + PM | Clarify/split stories, estimate, order; keep glossary current. | Groomed backlog |
+| Sprint planning | PM + TL | Select stories into the sprint; TL slices into per-aggregate tasks. | Sprint scope + tasks |
+| Standup (tick) | PM (scheduler) | Reconcile board, unblock, reassign; emit status event to UI. | `run.status` events |
+| Sprint review / demo | QE + PM | Verify increment vs acceptance criteria; user may inspect/accept. | Accepted increment |
+| Retrospective | PM + all | What worked / failed / fix per role. | **Lessons** → self-improve loop |
+
+- Any ceremony can escalate to `human needed` (e.g. story too ambiguous to refine, or user
+  acceptance required at review).
+- The retrospective is the bridge to `system-design.md` §6: its per-role findings ARE the lessons
+  the harness-lever self-improvement consumes.
