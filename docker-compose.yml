@@ -1,0 +1,22 @@
+# Local infra for let-us-build. Single runtime for the app itself (Python) — this compose
+# only provides backing services. No Node memory sidecar (memory is native: see lub_memory).
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: lub-db
+    environment:
+      POSTGRES_USER: lub
+      POSTGRES_PASSWORD: lub
+      POSTGRES_DB: letusbuild
+    ports:
+      - "5432:5432"
+    volumes:
+      - lub_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lub -d letusbuild"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  lub_pgdata:
