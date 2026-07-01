@@ -71,8 +71,17 @@ decision is genuinely required. The user acts as product sponsor, not project ma
 - FR-WEB-2: Requirement intake (rich text + file upload + links), attached to a project.
 - FR-WEB-3: Kanban board, 4 lanes (`plan | human needed | processing | testing | done`), realtime.
 - FR-WEB-4: Manual ticket creation into `plan`; drag is allowed only where the engine permits.
-- FR-WEB-5: Ticket detail: description, status history, assigned agent(s), discussion transcript,
-  artifacts, produced code/diff, and (for `human needed`) an answer box.
+- FR-WEB-5: Ticket detail (side drawer): tabs Overview · **Discussion** · Artifacts · Diff ·
+  History. Discussion tab shows the **live agent conversation** (chat-like, role icon+name+color)
+  and a pinned plain-language **Decision card** (decision, why, alternatives, concerns,
+  follow-ups). For `human needed`, a clear banner + single answer box appears where the work paused.
+- FR-WEB-8: **UI/UX principles (LOCKED)** — simple, easy to understand, easy to use, accessible.
+  Few screens, shallow nav, one primary action per screen, sensible defaults, plain language.
+- FR-WEB-9: **Accessibility = WCAG 2.2 AA** (hard requirement): keyboard-operable, screen-reader
+  friendly (semantic HTML + ARIA + polite live regions for realtime), contrast ≥ AA, status/role
+  never by color alone (icon+text), honors `prefers-reduced-motion`, works at 200% zoom / 320px.
+- FR-WEB-10: Every screen defines empty / loading (skeletons) / error (plain-language, recoverable)
+  states. See `design/ui-ux-spec.md`.
 - FR-WEB-6: Agent settings: per-agent provider/model/skills/enabled toggle.
 - FR-WEB-7: Live activity/log stream of agent actions.
 

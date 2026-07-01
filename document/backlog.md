@@ -41,7 +41,10 @@
 - **LUB-021** Dashboard + create-project form. *(plan, deps: 020)*
 - **LUB-022** Requirement intake (rich text + file upload + links). *(plan, deps: 021)*
 - **LUB-023** Kanban board: 4 lanes, ticket cards, realtime via WS. *(plan, deps: 020)*
-- **LUB-024** Ticket detail (read): description, history, artifacts, discussion transcript. *(plan, deps: 023)*
+- **LUB-024** Ticket detail drawer: tabs Overview/Artifacts/Diff/History + `human needed` answer box. *(plan, deps: 023)*
+- **LUB-024b** Discussion tab: live chat-like transcript (role icon+name+color) + pinned Decision card, streamed via `discussion.*` events. *(plan, deps: 024, 054)*
+- **LUB-027** Accessibility pass: WCAG 2.2 AA across web (keyboard, ARIA, live regions, contrast, reduced-motion, 200%/320px) + automated a11y checks in QE. *(plan, deps: 020)*
+- **LUB-028** Empty/loading(skeleton)/error states for every screen; plain-language copy. *(plan, deps: 020)*
 - **LUB-025** Per-agent config UI (provider/model/skills/enabled). *(plan, deps: 013)*
 - **LUB-026** WS gateway in core-api + event contracts. *(plan, deps: 013)*
 

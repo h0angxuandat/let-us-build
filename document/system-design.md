@@ -238,7 +238,8 @@ desired, but that is not the plan.
   CRUD, `/tickets/{id}` detail, `/tickets/{id}/answer` (resolve human_needed),
   `/agents` config CRUD, `/projects/{id}/start`, `/runs/{id}`.
 - **WebSocket** `/ws/projects/{id}`: server→client events `ticket.lane_changed`,
-  `ticket.updated`, `discussion.message`, `agent.activity`, `human.requested`, `run.status`.
+  `ticket.updated`, `discussion.started`, `discussion.message`, `discussion.turn` (typing/progress),
+  `discussion.decided`, `human.requested`, `agent.activity`, `run.status`.
   Client→server is minimal (subscribe/ack). All mutations go through REST.
 - **Auth (MVP)**: single-user local, no auth (or a local token). Multi-user is post-MVP (OQ5).
 

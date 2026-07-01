@@ -148,14 +148,17 @@ Skills feed the agent's system prompt + available tools. Self-improvement (sia h
 updates these skill packs and accumulates **lessons** that are retrieved alongside them.
 
 ## 7. Discussion protocol (per-ticket decisions)
-- Triggered when a ticket needs a cross-role decision (e.g. TL+Dev+QE on an approach, or
-  BA+Designer on a UX trade-off).
-- Bounded multi-turn exchange (max-turns cap) among the relevant roles; a **chair** (PM or TL)
-  summarizes to `decision + rationale`.
-- The decision + transcript are persisted to the ticket (`Discussion`/`Message`) and to memory
-  (procedural tier) so future tickets retrieve precedent.
-- If the group cannot converge within the cap, the chair escalates the ticket to `human needed`
-  with a crisp question + options.
+Full mechanism in `agent-discussion-protocol.md`; UX for watching it in `../design/ui-ux-spec.md` §5.
+In short:
+- Triggered only for **multi-role decisions** (e.g. TL+Dev+QE on an approach, BA+Designer on a UX
+  trade-off) — not routine work.
+- A **shared append-only transcript** ("blackboard"); each turn = one agent reads the transcript +
+  its memory/glossary and appends a message. Runs inside a durable LangGraph subgraph.
+- **Chair by ticket type** (D13): business/product → PM, technical → TL. Chair picks next speaker,
+  judges convergence, and writes a **structured Decision** (decision + rationale + alternatives +
+  dissent + follow-ups).
+- Bounded (max-turns + budget). No convergence → escalate to `human needed` with a crisp question.
+- Decision + transcript persisted to the ticket and to memory (procedural tier) as precedent.
 
 ## 8. Human-in-the-loop contract
 - A `HumanRequest` carries: `ticket_id`, a specific `question`, optional `options[]`, and the
