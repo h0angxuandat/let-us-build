@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lub_store.db import Base
-from lub_store.models import Agent, Project, Requirement, Sprint, Ticket
+from lub_store.models import Agent, Artifact, Project, Requirement, Sprint, Ticket
 
 
 class Repository[T](Protocol):
@@ -75,3 +75,7 @@ class SprintRepository(SqlAlchemyRepository[Sprint]):
 
 class TicketRepository(SqlAlchemyRepository[Ticket]):
     model = Ticket
+
+
+class ArtifactRepository(SqlAlchemyRepository[Artifact]):
+    model = Artifact

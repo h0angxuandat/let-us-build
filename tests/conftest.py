@@ -25,8 +25,12 @@ def client(tmp_path) -> Iterator[TestClient]:  # type: ignore[no-untyped-def]
     Base.metadata.create_all(sync_engine)
     sync_engine.dispose()
 
+    # Force the offline TemplateRouter so tests never hit a real provider, even if keys are in env.
     settings = Settings(
-        database_url=f"sqlite+aiosqlite:///{db_file}", seed_on_startup=True
+        database_url=f"sqlite+aiosqlite:///{db_file}",
+        seed_on_startup=True,
+        anthropic_api_key="",
+        openai_api_key="",
     )
     with TestClient(create_app(settings)) as test_client:
         yield test_client

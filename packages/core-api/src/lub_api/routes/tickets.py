@@ -6,14 +6,21 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from lub_store import Lane
-from lub_store.models import Ticket
-from lub_store.repositories import ProjectRepository, TicketRepository
+from lub_agents import AgentConfig, AgentContext, build_agent
+from lub_llm import AgentLLMConfig
+from lub_store import Lane, Role
+from lub_store.models import Artifact, Ticket
+from lub_store.repositories import (
+    AgentRepository,
+    ArtifactRepository,
+    ProjectRepository,
+    TicketRepository,
+)
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lub_api.db import get_session
-from lub_api.schemas import TicketCreate, TicketRead, TicketUpdate
+from lub_api.schemas import ArtifactRead, TicketCreate, TicketRead, TicketUpdate
 
 router = APIRouter(tags=["tickets"])
 
@@ -88,4 +95,57 @@ async def update_ticket(
     await session.flush()
     event_type = "ticket.lane_changed" if lane_changed else "ticket.updated"
     await _publish(request, ticket.project_id, event_type, ticket)
+    return ticket
+
+
+@router.get("/tickets/{ticket_id}/artifacts", response_model=list[ArtifactRead], tags=["tickets"])
+async def list_artifacts(
+    ticket_id: UUID, session: AsyncSession = Depends(get_session)
+) -> list[Artifact]:
+    return await ArtifactRepository(session).list(ticket_id=ticket_id)
+
+
+@router.post("/tickets/{ticket_id}/run", response_model=TicketRead, tags=["tickets"])
+async def run_ticket(
+    ticket_id: UUID, request: Request, session: AsyncSession = Depends(get_session)
+) -> Ticket:
+    """Run the Business Analyst on a ticket (M3): produce a BRD artifact, advance the lane.
+
+    Auto-pick + the full SDLC land in M4/M5; for now this is the manual single-agent path.
+    """
+    ticket = await TicketRepository(session).get(ticket_id)
+    if ticket is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "ticket not found")
+
+    ba_agents = await AgentRepository(session).list(role=Role.BA, project_id=None)
+    if not ba_agents:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "no BA agent configured")
+    a = ba_agents[0]
+    config = AgentConfig(
+        role=a.role,
+        llm=AgentLLMConfig(provider=a.provider, model=a.model, temperature=a.temperature),
+        system_prompt=a.system_prompt,
+        skill_ids=tuple(a.skill_ids),
+    )
+
+    ticket.lane = Lane.PROCESSING
+    await session.flush()
+    await _publish(request, ticket.project_id, "ticket.lane_changed", ticket)
+
+    ctx = AgentContext(ticket=ticket, router=request.app.state.router, session=session)
+    await build_agent(config).run(ctx)
+
+    ticket.lane = Lane.DONE
+    await session.flush()
+    await _publish(request, ticket.project_id, "ticket.lane_changed", ticket)
+
+    artifacts = await ArtifactRepository(session).list(ticket_id=ticket.id)
+    if artifacts:
+        await request.app.state.events.publish(
+            ticket.project_id,
+            {
+                "type": "artifact.created",
+                "artifact": ArtifactRead.model_validate(artifacts[-1]).model_dump(mode="json"),
+            },
+        )
     return ticket

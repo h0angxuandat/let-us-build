@@ -1,5 +1,5 @@
 // Typed REST client for the core API.
-import type { Agent, Project, Ticket } from "./types";
+import type { Agent, Artifact, Project, Ticket } from "./types";
 
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8300";
 
@@ -30,6 +30,8 @@ export const api = {
     }),
   moveTicket: (ticketId: string, lane: string) =>
     request<Ticket>(`/tickets/${ticketId}`, { method: "PATCH", body: JSON.stringify({ lane }) }),
+  runTicket: (ticketId: string) => request<Ticket>(`/tickets/${ticketId}/run`, { method: "POST" }),
+  listArtifacts: (ticketId: string) => request<Artifact[]>(`/tickets/${ticketId}/artifacts`),
 
   listAgents: () => request<Agent[]>("/agents"),
 };
