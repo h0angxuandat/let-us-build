@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from lub_store import Role
+from lub_store import Lane, Role, TicketType
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -72,3 +72,37 @@ class AgentRead(BaseModel):
     model: str
     temperature: float
     skill_ids: list[str]
+
+
+class TicketCreate(BaseModel):
+    """Manual ticket add — always lands in the `plan` lane (FR-WEB-4)."""
+
+    title: str = Field(min_length=1, max_length=300)
+    description: str = ""
+    type: TicketType = TicketType.USER_STORY
+    priority: int = 0
+    acceptance_criteria: str | None = None
+
+
+class TicketUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    lane: Lane | None = None
+    status: str | None = None
+    priority: int | None = None
+    assignee_role: Role | None = None
+
+
+class TicketRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    project_id: UUID
+    key: str
+    title: str
+    description: str
+    type: TicketType
+    lane: Lane
+    status: str
+    priority: int
+    assignee_role: Role | None
+    created_by: str

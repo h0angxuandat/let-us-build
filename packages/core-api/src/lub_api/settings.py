@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     default_provider: str = "anthropic"
     default_model: str = "claude-opus-4-8"
     seed_on_startup: bool = True
+    cors_origins: list[str] = ["http://localhost:8301", "http://127.0.0.1:8301"]
 
 
 def get_settings() -> Settings:

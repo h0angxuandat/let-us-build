@@ -1,0 +1,195 @@
+/* Kanban board, ticket cards, and the ticket drawer. */
+
+.board-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.back-link {
+  text-decoration: none;
+  font-size: var(--text-sm);
+}
+.add-inline {
+  display: flex;
+  gap: var(--space-1);
+}
+.add-inline input {
+  min-width: 16rem;
+}
+
+.board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 1fr);
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.lane {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-1);
+  min-height: 8rem;
+}
+.lane__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.35rem 0.4rem;
+}
+.lane__title {
+  font-size: 0.95rem;
+  margin: 0;
+  flex: 1;
+}
+.lane__count {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0 0.5rem;
+}
+.lane__add {
+  font-size: var(--text-sm);
+  padding: 0.2rem 0.5rem;
+  background: transparent;
+  color: var(--color-accent);
+  border: 1px solid var(--color-border);
+}
+.lane__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0.3rem;
+}
+.lane__empty {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  padding: 0.4rem;
+  margin: 0;
+}
+
+.ticket-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+  width: 100%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem;
+  box-shadow: var(--shadow-card);
+}
+.ticket-card:hover {
+  border-color: var(--color-accent);
+}
+.ticket-card__key {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ticket-card__title {
+  font-weight: 600;
+}
+.ticket-card__meta {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.badge {
+  font-size: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  color: var(--color-muted);
+}
+.badge--attention {
+  color: var(--color-attention);
+  border-color: var(--color-attention);
+}
+
+/* Drawer */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: oklch(0% 0 0 / 0.35);
+  display: flex;
+  justify-content: flex-end;
+}
+.drawer {
+  width: min(32rem, 100%);
+  background: var(--color-surface);
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--space-3);
+  box-shadow: -4px 0 24px oklch(0% 0 0 / 0.15);
+  animation: slide-in var(--duration-normal) var(--ease-out-expo);
+}
+@keyframes slide-in {
+  from {
+    transform: translateX(1rem);
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    animation: none;
+  }
+}
+.drawer__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.drawer__header h2 {
+  margin: 0.2rem 0 0;
+  font-size: 1.2rem;
+}
+.drawer__close {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+.tabs {
+  display: flex;
+  gap: 0.3rem;
+  border-bottom: 1px solid var(--color-border);
+  margin: var(--space-2) 0;
+}
+.tab {
+  background: transparent;
+  color: var(--color-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0.4rem 0.6rem;
+}
+.tab--active {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+.detail {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0 0 var(--space-2);
+}
+.detail dt {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+.detail dd {
+  margin: 0;
+}
+.placeholder {
+  color: var(--color-muted);
+}

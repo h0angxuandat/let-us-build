@@ -6,10 +6,12 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from lub_store import create_engine, create_sessionmaker
 from lub_store.seed import seed_default_agents
 
-from lub_api.routes import agents, health, projects, requirements
+from lub_api.events import EventBus
+from lub_api.routes import agents, health, projects, requirements, tickets, ws
 from lub_api.settings import Settings, get_settings
 
 __version__ = "0.0.0"
@@ -30,11 +32,23 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
-    """Build the FastAPI app. Orchestrator/WS routers are added from M4 onward."""
+    """Build the FastAPI app. Orchestrator routers are added from M4 onward."""
+    resolved = settings or get_settings()
     app = FastAPI(title="let-us-build", version=__version__, lifespan=_lifespan)
-    app.state.settings = settings or get_settings()
+    app.state.settings = resolved
+    app.state.events = EventBus()
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=resolved.cors_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.include_router(health.router)
     app.include_router(projects.router)
     app.include_router(requirements.router)
     app.include_router(agents.router)
+    app.include_router(tickets.router)
+    app.include_router(ws.router)
     return app
