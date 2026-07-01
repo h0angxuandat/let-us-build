@@ -1,11 +1,12 @@
 """The six role agents for let-us-build.
 
-Each agent has independent config (provider/model/skills/enabled) and a `run()` that works one
-ticket. Agents share memory and can discuss (see lub_orchestrator.discussion). Concrete role
-behaviour lands in M3 (BA) and M5 (full roster). M0 ships the base + registry + role stubs.
+Each agent has independent config (provider/model/skills/enabled) and a `run(ctx)` that works one
+ticket. The BA is implemented in M3; the rest land in M5. Agents share memory (M6) and can
+discuss (M5).
 """
 
 from lub_agents.base import Agent, AgentConfig
+from lub_agents.context import AgentContext
 from lub_agents.registry import build_agent
 
-__all__ = ["Agent", "AgentConfig", "build_agent"]
+__all__ = ["Agent", "AgentConfig", "AgentContext", "build_agent"]

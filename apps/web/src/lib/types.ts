@@ -37,6 +37,15 @@ export interface Agent {
   skill_ids: string[];
 }
 
+export interface Artifact {
+  id: string;
+  ticket_id: string;
+  type: string;
+  inline: string | null;
+  version: number;
+  produced_by: Role | null;
+}
+
 // Lanes in board order. Note: the board shows all five lane states.
 export const LANES: { id: Lane; label: string }[] = [
   { id: "plan", label: "Plan" },

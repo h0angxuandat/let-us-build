@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from lub_llm import build_router
 from lub_store import create_engine, create_sessionmaker
 from lub_store.seed import seed_default_agents
 
@@ -37,6 +38,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="let-us-build", version=__version__, lifespan=_lifespan)
     app.state.settings = resolved
     app.state.events = EventBus()
+    app.state.router = build_router(
+        anthropic_key=resolved.anthropic_api_key, openai_key=resolved.openai_api_key
+    )
 
     app.add_middleware(
         CORSMiddleware,

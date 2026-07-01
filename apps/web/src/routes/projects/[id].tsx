@@ -64,7 +64,13 @@ export default function ProjectBoard() {
       </Show>
 
       <Show when={open()}>
-        {(t) => <TicketDrawer ticket={t()} onClose={() => setOpen(null)} />}
+        {(t) => (
+          <TicketDrawer
+            ticket={t()}
+            onClose={() => setOpen(null)}
+            onChanged={() => void refetch()}
+          />
+        )}
       </Show>
     </section>
   );

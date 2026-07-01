@@ -106,3 +106,13 @@ class TicketRead(BaseModel):
     priority: int
     assignee_role: Role | None
     created_by: str
+
+
+class ArtifactRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    ticket_id: UUID
+    type: str
+    inline: str | None
+    version: int
+    produced_by: Role | None
