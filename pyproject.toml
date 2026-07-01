@@ -1,0 +1,68 @@
+# let-us-build — uv workspace root (virtual: not itself a package)
+[project]
+name = "let-us-build"
+version = "0.0.0"
+description = "An AI software company in a box — role-based agents build products end-to-end."
+requires-python = ">=3.12"
+# The virtual root depends on every workspace member so `uv sync` installs the whole
+# workspace as editable into one shared venv (dev convenience).
+dependencies = [
+  "lub-store",
+  "lub-llm",
+  "lub-memory",
+  "lub-agents",
+  "lub-orchestrator",
+  "lub-improvement",
+  "lub-workspace",
+  "lub-api",
+  "let-us-build-cli",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*", "apps/cli"]
+
+[tool.uv.sources]
+lub-store = { workspace = true }
+lub-llm = { workspace = true }
+lub-memory = { workspace = true }
+lub-agents = { workspace = true }
+lub-orchestrator = { workspace = true }
+lub-improvement = { workspace = true }
+lub-workspace = { workspace = true }
+lub-api = { workspace = true }
+let-us-build-cli = { workspace = true }
+
+[dependency-groups]
+dev = [
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "pytest>=8",
+  "pytest-asyncio>=0.24",
+  "httpx>=0.27",
+]
+
+# ── Shared tool config (applies across the workspace) ────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["packages", "apps"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Typer's dependency-injection idiom uses these calls as argument defaults.
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests", "packages", "apps"]

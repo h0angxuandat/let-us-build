@@ -1,0 +1,22 @@
+/* Design tokens (see design/ui-ux-spec.md §2). Light, calm, accessible. Expanded in M2. */
+:root {
+  --color-surface: oklch(99% 0 0);
+  --color-text: oklch(22% 0 0);
+  --color-accent: oklch(58% 0.16 250);
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-4: 2rem;
+
+  --text-base: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  --text-title: clamp(1.75rem, 1.2rem + 2vw, 3rem);
+
+  --duration-normal: 240ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-normal: 0ms;
+  }
+}

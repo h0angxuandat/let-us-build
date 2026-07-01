@@ -1,0 +1,22 @@
+{
+  "name": "@let-us-build/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "let-us-build — SolidStart web UI (dashboard, Kanban, discussion viewer). Not installed in M0.",
+  "scripts": {
+    "dev": "vinxi dev --port 8301",
+    "build": "vinxi build",
+    "start": "vinxi start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@solidjs/router": "^0.15.0",
+    "@solidjs/start": "^1.0.0",
+    "solid-js": "^1.9.0",
+    "vinxi": "^0.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

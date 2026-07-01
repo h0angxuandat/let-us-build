@@ -1,0 +1,13 @@
+[project]
+name = "lub-llm"
+version = "0.0.0"
+description = "let-us-build — LLM provider abstraction (per-agent provider/model via LiteLLM)."
+requires-python = ">=3.12"
+dependencies = []  # litellm added in M3 (LUB-030)
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lub_llm"]

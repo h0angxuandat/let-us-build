@@ -24,6 +24,7 @@ build/
 # Node / web
 node_modules/
 .vite/
+.vinxi/
 .output/
 .solid/
 *.log
